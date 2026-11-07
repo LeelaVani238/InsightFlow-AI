@@ -32,8 +32,8 @@ The project also includes a synthetic dataset containing 50,000 survey responses
                      v        v         v
                +--------+ +----------+ +---------+
                |  Data  | |Comparison| |   RAG   |
-                | Agent  | |  Agent   | |  Agent  |
-                +--------+ +----------+ +---------+
+               | Agent  | |  Agent   | |  Agent  |
+               +--------+ +----------+ +---------+
                     |          |           |
                     v          v           v
                 Survey      Period      FAQ Search
