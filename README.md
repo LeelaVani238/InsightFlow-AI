@@ -1,313 +1,286 @@
-# MiniSense — Multi-Agent Survey Analysis System
+# InsightFlow AI
+## Multi-Agent System for Customer Feedback Analysis
 
-MiniSense is a survey analysis system that combines structured data analysis, semantic FAQ retrieval, period-over-period comparisons, and evidence-based answer generation. It helps businesses understand customer satisfaction, identify recurring feedback themes, compare performance across time periods, and retrieve relevant operational policies.
+InsightFlow AI is a Python project that helps analyse customer survey responses, understand satisfaction trends and find useful information from a FAQ knowledge base.
 
-The project demonstrates a modular multi-agent architecture in which an orchestrator coordinates specialized agents and combines their results into a single response.
+The idea behind this project is to bring different types of analysis together instead of handling everything separately. It uses multiple specialised agents, with each agent responsible for a particular task. The agents work together to analyse survey data, compare results across different periods and retrieve relevant information from FAQs.
+
+I built this project to explore how multi-agent systems, data analysis and Retrieval-Augmented Generation can be combined to solve a practical business problem.
 
 ## 1. Key Features
 
-- **Survey metrics:** Calculate response counts, Customer Satisfaction Score (CSAT), average ratings, and common feedback themes.
-- **Semantic FAQ retrieval:** Search a local FAQ knowledge base using sentence embeddings and ChromaDB.
-- **Period comparison:** Compare survey metrics between two periods and calculate changes.
-- **Multi-agent orchestration:** Route business questions to specialized agents and combine their outputs.
-- **Evidence-based answers:** Use retrieved FAQ content to answer supported policy questions.
-- **Synthetic dataset:** Generate 50,000 survey responses covering May and June 2026.
-- **Automated tests:** Validate metric calculations and agent behavior using pytest.
+- Survey Analysis: Calculates the total number of responses, average ratings and Customer Satisfaction Score (CSAT).
+- Feedback Analysis: Identifies commonly discussed topics in customer comments, including food quality, waiting time, staff behaviour and pricing.
+- Period Comparison: Compares survey results across different months and highlights changes in customer satisfaction.
+- FAQ Retrieval: Uses semantic search to find relevant information from a local FAQ knowledge base.
+- Multi-Agent Workflow: Assigns different tasks to specialised agents and brings their results together.
+- Structured Outputs: Uses Pydantic to maintain consistent communication between agents.
+- RAG Evaluation: Tests FAQ retrieval using sample business questions.
+- Automated Testing: Includes tests for metric calculations and agent functionality.
 
-## 2. Architecture
+The project also includes a synthetic dataset containing 50,000 survey responses covering May and June 2026.
 
-The system uses four specialized agents coordinated by an orchestrator.
+## 2. How the System Works
+                 Business Question
+                         |
+                         v
+                  +--------------+
+                  | Orchestrator |
+                  +--------------+
+                    /     |     \
+                   /      |      \
+                  v       v       v
+             +--------+ +----------+ +---------+
+             |  Data  | |Comparison| |   RAG   |
+             | Agent  | |  Agent   | |  Agent  |
+             +--------+ +----------+ +---------+
+                  |          |           |
+                  v          v           v
+              Survey      Period      FAQ Search
+              Analysis   Comparison   ChromaDB
+                  |          |           |
+                  +----------+-----------+
+                             |
+                             v
+                       SummaryAgent
+                             |
+                             v
+                      Final Response
 
-```text
-                         Business Question
-                                |
-                                v
-                       +------------------+
-                       |   Orchestrator   |
-                       +------------------+
-                          |      |      |
-               +----------+      |      +-----------+
-               |                 |                  |
-               v                 v                  v
-        +-------------+  +---------------+  +-------------+
-        | DataAgent   |  | ComparisonAgent|  |  RAGAgent   |
-        +-------------+  +---------------+  +-------------+
-               |                 |                  |
-               v                 v                  v
-        Survey Dataset     Period Metrics       FAQ Retrieval
-               |                 |             ChromaDB +
-               +-----------------+             Embeddings
-                          |
-                          v
-                   +--------------+
-                   | SummaryAgent |
-                   +--------------+
-                          |
-                          v
-                  Final Business Answer
-```
+The application follows a multi-agent architecture. Each agent handles a specific responsibility, while the Orchestrator manages the overall workflow.
 
-### Agent Responsibilities
+When a business question is submitted, the Orchestrator identifies what needs to be done and forwards the task to the appropriate agent. The results are then collected and passed to the SummaryAgent.
 
-**Orchestrator**
-- Receives the business question.
-- Determines which analysis tasks to execute using rule-based routing.
-- Passes structured task specifications to the appropriate agents.
-- Collects their outputs and invokes the SummaryAgent.
+### Orchestrator
 
-**DataAgent**
-- Loads survey responses from the dataset.
-- Filters records by date and business when requested.
-- Calculates response counts, CSAT, average ratings, and feedback themes.
-- Uses reusable metric functions rather than embedding calculations directly into the agent.
+The Orchestrator manages the workflow between the different agents. It receives business questions, identifies the required tasks and coordinates the execution of those tasks.
 
-**ComparisonAgent**
-- Analyzes two periods independently using the DataAgent.
-- Calculates absolute differences in response counts, CSAT, and average ratings.
-- Returns structured comparison results for further interpretation.
+### DataAgent
 
-**RAGAgent**
-- Retrieves FAQ chunks relevant to a business question.
-- Uses sentence-transformer embeddings and a persistent ChromaDB collection.
-- Returns retrieved text, source metadata, chunk identifiers, and similarity distances.
+The DataAgent works with the survey dataset. It calculates response counts, customer satisfaction scores and average ratings. It also identifies common topics in customer feedback.
 
-**SummaryAgent**
-- Produces a question-specific response from structured metrics and retrieved FAQ evidence.
-- Uses deterministic rules to answer supported operational policy questions.
-- Provides a general metric summary when no supported policy rule matches.
+### ComparisonAgent
 
-> **Implementation note:** The current SummaryAgent is deterministic and rule-based. It does not use an LLM to generate responses. The architecture can be extended to use an LLM for more flexible planning and answer synthesis.
+The ComparisonAgent focuses on comparing survey results across different periods. It highlights changes in response counts, CSAT and average ratings, making it easier to understand how customer satisfaction has changed.
 
-## 3. Technology Stack
+### RAGAgent
 
-| Technology | Purpose |
+The RAGAgent handles questions that require information from the FAQ knowledge base. It generates text embeddings using Sentence Transformers and searches ChromaDB for relevant information.
+
+### SummaryAgent
+
+The SummaryAgent collects the outputs from the other agents and prepares the final response. It uses predefined rules to answer supported operational questions and summarises the available survey metrics.
+
+## 3. Technologies Used
+
+| Technology | Usage |
 |---|---|
 | Python | Application development |
-| uv | Dependency and environment management |
-| Pandas | Dataset analysis and processing |
-| Pydantic | Structured task and result schemas |
-| Sentence Transformers | Semantic text embeddings |
-| ChromaDB | Persistent vector storage and retrieval |
-| NumPy | Numerical operations |
+| Pandas | Survey data processing |
+| NumPy | Numerical calculations |
+| Pydantic | Data validation and structured outputs |
+| Sentence Transformers | Text embeddings |
+| ChromaDB | Vector storage and semantic retrieval |
+| uv | Dependency management |
 | Pytest | Automated testing |
 
 ## 4. Project Structure
 
+The project is organised into separate modules for agents, data processing, FAQ retrieval and testing.
+
 ```text
-minisense/
-├── main.py
-├── app/
-│   ├── __init__.py
-│   ├── agents/
-│   │   ├── __init__.py
-│   │   ├── orchestrator.py
-│   │   ├── data_agent.py
-│   │   ├── rag_agent.py
-│   │   ├── comparison_agent.py
-│   │   └── summary_agent.py
-│   ├── rag/
-│   │   ├── __init__.py
-│   │   ├── ingestion.py
-│   │   └── retrieval.py
-│   ├── tools/
-│   │   ├── __init__.py
-│   │   └── metrics.py
-│   └── schemas.py
-├── data/
-│   ├── survey_responses.json
-│   ├── product_faq.txt
-│   └── rag_evaluation_results.json
-├── scripts/
-│   ├── generate_data.py
-│   ├── test_data_agent.py
-│   ├── ingest_faq.py
-│   ├── test_rag_agent.py
-│   ├── test_comparison_agent.py
-│   ├── test_orchestrator.py
-│   └── evaluate_rag.py
-├── tests/
-│   ├── test_metrics.py
-│   └── test_summary_agent.py
-├── pyproject.toml
-├── uv.lock
-├── .gitignore
-└── README.md
+InsightFlow-AI/
+|
+|-- app/
+|   |-- agents/
+|   |   |-- orchestrator.py
+|   |   |-- data_agent.py
+|   |   |-- rag_agent.py
+|   |   |-- comparison_agent.py
+|   |   |-- summary_agent.py
+|   |
+|   |-- rag/
+|   |   |-- ingestion.py
+|   |   |-- retrieval.py
+|   |
+|   |-- tools/
+|   |   |-- metrics.py
+|   |
+|   |-- schemas.py
+|
+|-- data/
+|-- scripts/
+|-- tests/
+|-- main.py
+|-- pyproject.toml
+|-- requirements.txt
+|-- uv.lock
+|-- README.md
 ```
 
-The structure above describes the expected project layout. Files such as `main.py`, `.env.example`, or `uv.lock` should be included only if they actually exist in your working directory.
+## 5. Getting Started
 
-## 5. Setup
+### Requirements
 
-### Prerequisites
-
-- Python 3.11 or newer
+- Python 3.11 or later
 - uv package manager
-- Internet access for the initial download of the sentence-transformer model
+- Internet connection for the initial model download
+
+### Clone the Repository
+
+```bash
+git clone https://github.com/LeelaVani238/InsightFlow-AI.git
+cd InsightFlow-AI
+```
 
 ### Install Dependencies
 
-From the project root, run:
-
-```cmd
+```bash
 uv sync
 ```
 
-This installs the dependencies defined in `pyproject.toml`.
+### Generate Survey Data
 
-### Generate the Synthetic Dataset
-
-If you need to regenerate the survey dataset, run:
-
-```cmd
+```bash
 uv run python -m scripts.generate_data
 ```
 
-The dataset generator creates synthetic survey responses across two months. The generated data is intended for development and evaluation, not as a representation of actual customer behavior.
+This generates the synthetic survey dataset used by the application.
 
-### Ingest the FAQ
+### Prepare the FAQ Knowledge Base
 
-Build or update the local FAQ vector collection:
-
-```cmd
+```bash
 uv run python -m scripts.ingest_faq
 ```
 
-This process reads the FAQ, splits it into overlapping text chunks, generates embeddings, and stores the results in ChromaDB.
+This reads the FAQ document, splits it into smaller text chunks, generates embeddings and stores them in ChromaDB.
 
-The initial execution downloads the configured embedding model if it is not already available locally.
+### Run RAG Evaluation
 
-### Run the RAG Evaluation
-
-```cmd
+```bash
 uv run python -m scripts.evaluate_rag
 ```
 
-The evaluation runs three sample questions, prints the retrieved FAQ chunks and final answers, and saves the results to:
+The evaluation script runs sample questions against the FAQ knowledge base and saves the results in the data directory.
 
-```text
-data/rag_evaluation_results.json
-```
+### Run Tests
 
-### Run Individual Agent Tests
-
-```cmd
-uv run python -m scripts.test_data_agent
-uv run python -m scripts.test_rag_agent
-uv run python -m scripts.test_comparison_agent
-uv run python -m scripts.test_orchestrator
-```
-
-### Run Automated Tests
-
-```cmd
+```bash
 uv run python -m pytest -v
 ```
 
-## 6. Survey Metrics
+### Start the Application
 
-### Response Count
+```bash
+uv run python main.py
+```
 
-Counts the valid survey responses in the selected dataset after filtering.
+## 6. Survey Analysis
 
-### CSAT
+One of the main parts of the project is analysing customer feedback through numerical metrics.
 
-Customer Satisfaction Score is calculated as the percentage of valid ratings that are 4 or 5 on a five-point scale.
+The application calculates the following:
 
-**Formula:**
+**Response Count**
 
-CSAT (%) = (Number of ratings >= 4 / Number of valid ratings) × 100
+The total number of valid survey responses for the selected period.
 
-### Average Rating
+**Customer Satisfaction Score (CSAT)**
 
-Calculates the arithmetic mean of valid ratings on the five-point scale.
+CSAT represents the percentage of customers who provided a positive rating. Ratings of 4 and 5 are considered positive on a five-point scale.
 
-### Feedback Themes
+Formula:
 
-The current baseline theme detector uses keywords in free-text responses to identify themes such as food quality, waiting time, staff behavior, cleanliness, pricing, and order accuracy.
+CSAT = (Positive Responses / Total Valid Responses) x 100
 
-This method is intentionally simple and interpretable. It can miss synonyms, context, negation, and subtle sentiment. Theme counts should therefore be treated as approximate indicators rather than definitive classifications.
+**Average Rating**
 
-## 7. RAG Design and Evaluation
+The average of all valid customer ratings, providing an overall view of customer satisfaction.
 
-The retrieval pipeline uses the `sentence-transformers/all-MiniLM-L6-v2` embedding model and ChromaDB with cosine-distance-based retrieval.
+**Feedback Themes**
 
-The FAQ is split into overlapping character-based chunks. Each chunk is embedded and stored with source metadata. For an incoming question, the system embeds the question and retrieves up to three relevant chunks.
+The application also identifies commonly mentioned topics in customer comments, such as waiting time, food quality, cleanliness, pricing and staff behaviour.
 
-### Sample Evaluation Questions
+## 7. Retrieval-Augmented Generation
 
-| Question | Expected policy information |
-|---|---|
-| How quickly must a customer complaint be escalated? | Escalation within 15 minutes |
-| What waiting times should customers expect during busy periods? | Approximately 15–20 minutes during peak periods |
-| What CSAT score triggers a root-cause review? | Scores below 4.0 trigger a review; the business target is 4.5 or higher |
+The FAQ retrieval component uses semantic search to find information related to a user's question.
 
-The evaluation script records the retrieved text and the final answer for each question. This allows retrieval quality to be examined separately from answer quality.
+The embedding model used is:
 
-### Strengths
+`sentence-transformers/all-MiniLM-L6-v2`
 
-- Retrieval is performed locally using a persistent vector database.
-- Semantic embeddings can retrieve relevant content even when the question differs from the FAQ wording.
-- The final answer rules can extract important policy details from retrieved evidence.
-- Saved evaluation results make manual inspection repeatable.
+The retrieval process works as follows:
 
-### Limitations
+1. The FAQ document is loaded into the application.
+2. The content is divided into smaller overlapping chunks.
+3. Sentence Transformers converts the chunks into embeddings.
+4. The embeddings are stored in ChromaDB.
+5. When a question is submitted, the same embedding model converts it into a vector.
+6. ChromaDB searches for the most relevant content.
+7. The retrieved information is passed to the response workflow.
 
-- Only three manually selected questions are currently evaluated.
-- Character-based chunking can split sentences or related information across chunks.
-- A low cosine distance indicates embedding similarity, not guaranteed factual correctness.
-- The current evaluation does not calculate formal retrieval precision, recall, or answer-grounding scores.
-- The SummaryAgent uses fixed rules and does not generalize to arbitrary questions in the way a capable language model might.
+This approach helps retrieve relevant information even when the wording of a question is different from the original FAQ content.
 
-## 8. Example Period Comparison
+### Sample Questions
 
-The synthetic dataset was generated for May and June 2026. An observed run produced the following comparison:
+The evaluation script includes questions such as:
 
-| Metric | May 2026 | June 2026 | Change |
-|---|---:|---:|---:|
-| Responses | 25,246 | 24,754 | -492 |
-| CSAT | 51.48% | 50.32% | -1.16 percentage points |
-| Average rating | 3.34 | 3.30 | -0.04 |
+- How quickly should a customer complaint be escalated?
+- What waiting time should customers expect during peak hours?
+- What CSAT score triggers a root-cause review?
 
-These values are from the current synthetic dataset and should be reproducible when the dataset and calculation logic remain unchanged.
+The retrieved content and corresponding responses are saved for further review.
 
-The results show a modest decline in satisfaction metrics between the two periods. They do not establish the cause of that decline. Further investigation should examine feedback themes, business-level differences, response channels, and operational context.
+## 8. Sample Survey Comparison
 
-## 9. Proposed Fine-Tuning Strategy
+The project includes synthetic survey data for May and June 2026. The ComparisonAgent uses this data to demonstrate how customer satisfaction changes can be analysed.
 
-The current implementation does not train or fine-tune a language model. The following is a proposed approach for a future version that needs more reliable classification, routing, and evidence-grounded answer generation.
+One sample evaluation produced the following results:
 
-### Dataset Strategy
+| Metric | May 2026 | June 2026 |
+|---|---:|---:|
+| Survey Responses | 25,246 | 24,754 |
+| CSAT | 51.48% | 50.32% |
+| Average Rating | 3.34 | 3.30 |
 
-Create a curated dataset from historical survey comments, business questions, verified operational policies, and human-reviewed responses. Remove personal information and sensitive customer details before training. Include examples covering positive and negative sentiment, mixed feedback, ambiguous requests, common complaint themes, policy questions, and cases where the available evidence is insufficient.
+The comparison shows a slight decrease in both CSAT and average ratings during June. The response count also decreased.
 
-Begin with approximately 3,000–5,000 carefully labeled examples for a pilot. Expand to 10,000–20,000 or more examples if evaluation results indicate that additional training data improves performance. Split the dataset into training, validation, and test sets, ensuring that near-duplicate examples do not leak across splits.
+These results demonstrate how the system presents changes across different periods and helps identify areas that may need further investigation.
 
-### Model and Fine-Tuning Approach
+Note: The figures are generated from synthetic survey data and are intended for demonstration purposes.
 
-Start with a capable open-weight instruction model suitable for the available hardware and deployment constraints. Establish a baseline using prompt engineering and retrieval-augmented generation before fine-tuning. For the initial experiment, use LoRA (Low-Rank Adaptation) to train a small number of additional parameters while keeping the base model frozen. If GPU memory is limited, consider QLoRA, which uses a quantized base model to reduce memory requirements. Full fine-tuning can be evaluated later if parameter-efficient approaches do not meet quality targets.
+## 9. Testing and Evaluation
 
-### Training Pipeline and Evaluation
+Testing is an important part of the project because the different agents depend on one another to complete the workflow.
 
-Use Hugging Face Transformers and PEFT to prepare the model, configure adapters, and run supervised fine-tuning. Version the datasets, prompts, model configurations, and evaluation results so experiments remain reproducible.
+The project includes:
 
-Evaluate the model on a held-out dataset using classification F1 scores, routing accuracy, answer relevance, factual consistency with retrieved evidence, and correct abstention when evidence is insufficient. Compare every fine-tuned version against the original model and the current rule-based implementation. Include human review of a representative sample of generated answers. Do not deploy a model solely because its training loss decreases.
+- Tests for survey metric calculations.
+- Individual agent execution scripts.
+- Tests for comparison functionality.
+- Tests for FAQ retrieval.
+- Orchestrator workflow testing.
+- SummaryAgent tests.
+- Sample RAG evaluation questions.
 
-### Serving and Future Maintenance
+These tests help verify individual components and check that the main workflows operate as expected.
 
-Deploy the selected model with its adapter in a versioned inference service. Keep retrieval, deterministic metric calculations, and business policy validation separate from model generation. This separation reduces the risk of a language model inventing numerical results or operational policies. Re-evaluate performance whenever the FAQ, dataset, base model, or adapter changes.
+## 10. Future Enhancements
 
-## 10. Future Improvements
+Some areas I would like to explore further are:
 
-- Replace keyword-based orchestration with an LLM planner that emits validated task specifications.
-- Add more robust theme classification, including sentiment, negation, and multi-label evaluation.
-- Support user-defined comparison periods instead of fixed May–June dates.
-- Improve chunking and evaluate retrieval using precision@k, recall@k, and manually verified relevance labels.
-- Add answer-grounding checks and explicit abstention when retrieved evidence is insufficient.
-- Expose the analysis pipeline through a documented API and add input validation, logging, and error handling.
-- Expand automated tests to cover retrieval failures, invalid questions, missing data, and unexpected agent outputs.
+- Adding sentiment analysis for more detailed customer feedback classification.
+- Supporting comparisons across custom date ranges.
+- Improving FAQ retrieval and answer relevance.
+- Exploring LLM-based orchestration for more flexible task routing.
+- Adding more RAG evaluation questions and performance metrics.
+- Introducing additional data visualisations.
+- Building an API to make the analysis functionality accessible to other applications.
 
-## 11. Design Principles
+## Conclusion
 
-MiniSense separates deterministic calculations from semantic retrieval and answer synthesis. Metric functions provide reproducible numerical results, Pydantic schemas help validate structured data, and the RAG pipeline supplies operational context from the FAQ. The orchestrator coordinates these components without requiring every task to use a language model.
+InsightFlow AI brings together customer survey analysis, feedback insights, period comparisons and semantic FAQ retrieval through a multi-agent architecture.
 
-The current implementation is a prototype built around synthetic survey data. Its reported metrics demonstrate the pipeline's behavior on that dataset and should not be interpreted as real business findings. The fine-tuning strategy describes future work; no model has been fine-tuned as part of the current implementation.
+Building this project gave me an opportunity to work with Python, data processing, embeddings, vector databases and agent coordination. It also helped me understand how different AI components can be organised to work together on a business problem.
+
+The project is a starting point for exploring how AI-based systems can make customer feedback analysis and information retrieval more efficient.
