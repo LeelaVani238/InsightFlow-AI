@@ -21,31 +21,31 @@ I built this project to explore how multi-agent systems, data analysis and Retri
 The project also includes a synthetic dataset containing 50,000 survey responses covering May and June 2026.
 
 ## 2. How the System Works
-                 Business Question
+                   Business Question
                          |
                          v
-                  +--------------+
-                  | Orchestrator |
-                  +--------------+
-                    /     |     \
-                   /      |      \
-                  v       v       v
-             +--------+ +----------+ +---------+
-             |  Data  | |Comparison| |   RAG   |
-             | Agent  | |  Agent   | |  Agent  |
-             +--------+ +----------+ +---------+
-                  |          |           |
-                  v          v           v
-              Survey      Period      FAQ Search
-              Analysis   Comparison   ChromaDB
-                  |          |           |
-                  +----------+-----------+
-                             |
-                             v
-                       SummaryAgent
-                             |
-                             v
-                      Final Response
+                    +--------------+
+                    | Orchestrator |
+                    +--------------+
+                      /     |     \
+                     /      |      \
+                    v       v       v
+               +--------+ +----------+ +---------+
+               |  Data  | |Comparison| |   RAG   |
+               | Agent  | |  Agent   | |  Agent  |
+               +--------+ +----------+ +---------+
+                    |          |           |
+                    v          v           v
+                Survey      Period      FAQ Search
+                Analysis   Comparison   ChromaDB
+                    |          |           |
+                    +----------+-----------+
+                               |
+                               v
+                           SummaryAgent
+                               |
+                               v
+                          Final Response
 
 The application follows a multi-agent architecture. Each agent handles a specific responsibility, while the Orchestrator manages the overall workflow.
 
